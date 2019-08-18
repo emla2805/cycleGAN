@@ -18,6 +18,7 @@ from utils import (
 logging.basicConfig(level=logging.INFO)
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 BUFFER_SIZE = 1000
+NUM_SAMPLES = 3
 
 
 if __name__ == "__main__":
@@ -49,35 +50,33 @@ if __name__ == "__main__":
         .shuffle(BUFFER_SIZE)
         .batch(args.batch_size)
     )
-    test_horses = test_horses.map(preprocess_image_test).batch(3)
-    test_zebras = test_zebras.map(preprocess_image_test).batch(3)
+    test_horses = test_horses.map(preprocess_image_test).batch(NUM_SAMPLES)
+    test_zebras = test_zebras.map(preprocess_image_test).batch(NUM_SAMPLES)
 
     ds = tf.data.Dataset.zip((train_horses, train_zebras))
 
     sample_horse = next(iter(test_horses))
     sample_zebra = next(iter(test_zebras))
 
-    OUTPUT_CHANNELS = 3
+    generator_g = networks.GeneratorNet()
+    generator_f = networks.GeneratorNet()
 
-    generator_g = networks.unet_generator(
-        OUTPUT_CHANNELS, norm_type="instancenorm"
-    )
-    generator_f = networks.unet_generator(
-        OUTPUT_CHANNELS, norm_type="instancenorm"
-    )
+    discriminator_x = networks.DiscriminatorNet()
+    discriminator_y = networks.DiscriminatorNet()
 
-    discriminator_x = networks.discriminator(
-        norm_type="instancenorm", target=False
+    generator_g_optimizer = tf.keras.optimizers.Adam(
+        args.lr_generator, beta_1=0.5
     )
-    discriminator_y = networks.discriminator(
-        norm_type="instancenorm", target=False
+    generator_f_optimizer = tf.keras.optimizers.Adam(
+        args.lr_generator, beta_1=0.5
     )
 
-    generator_g_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-    generator_f_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-
-    discriminator_x_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-    discriminator_y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+    discriminator_x_optimizer = tf.keras.optimizers.Adam(
+        args.lr_discriminator, beta_1=0.5
+    )
+    discriminator_y_optimizer = tf.keras.optimizers.Adam(
+        args.lr_discriminator, beta_1=0.5
+    )
 
     ckpt = tf.train.Checkpoint(
         generator_g=generator_g,
@@ -193,7 +192,7 @@ if __name__ == "__main__":
     for epoch in range(args.epochs):
         start_time = time.time()
 
-        for image_x, image_y in ds.take(10):
+        for image_x, image_y in ds:
             train_step(image_x, image_y)
 
         if (epoch + 1) % 5 == 0:
@@ -231,7 +230,7 @@ if __name__ == "__main__":
         template = "Epoch {} in {:.0f} sec, Gen G Loss: {}, Gen F Loss: {}, Disc X Loss: {}, Disc Y Loss: {}"
         print(
             template.format(
-                epoch,
+                (epoch + 1),
                 time.time() - start_time,
                 generator_g_loss.result(),
                 generator_f_loss.result(),
