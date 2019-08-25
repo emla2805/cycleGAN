@@ -145,18 +145,19 @@ class GeneratorNet(tf.keras.Model):
 class DiscriminatorNet(tf.keras.Model):
     def __init__(self):
         super(DiscriminatorNet, self).__init__()
-        self.conv1 = Conv2D(64, kernel_size=4, strides=2, padding="same", use_bias=False)
+        self.conv1 = Conv2D(64, kernel_size=4, strides=2, padding="same")
 
-        self.conv2 = Conv2D(128, kernel_size=4, strides=2, padding="same", use_bias=False)
+        self.conv2 = Conv2D(128, kernel_size=4, strides=2, padding="same")
         self.in2 = InstanceNormalization()
-        self.conv3 = Conv2D(256, kernel_size=4, strides=2, padding="same", use_bias=False)
+        self.conv3 = Conv2D(256, kernel_size=4, strides=2, padding="same")
         self.in3 = InstanceNormalization()
-        self.conv4 = Conv2D(512, kernel_size=4, strides=2, padding="same", use_bias=False)
+
+        self.conv4 = Conv2D(512, kernel_size=4, strides=1, padding="same")
         self.in4 = InstanceNormalization()
 
         self.conv5 = Conv2D(1, kernel_size=4, strides=1, padding="same")
 
-        self.lrelu = LeakyReLU()
+        self.lrelu = LeakyReLU(alpha=0.2)
 
     def call(self, x, **kwargs):
         x = self.lrelu(self.conv1(x))
