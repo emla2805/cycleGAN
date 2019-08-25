@@ -203,6 +203,18 @@ if __name__ == "__main__":
             save_path = manager.save()
             print("Saved checkpoint for epoch {}: {}".format(epoch, save_path))
 
+        # Decay the learning rate
+        if epoch > args.epochs / 2:
+            generator_g_optimizer.learning_rate.assign_sub(lr_generator_delta)
+            generator_f_optimizer.learning_rate.assign_sub(lr_generator_delta)
+
+            discriminator_x_optimizer.learning_rate.assign_sub(
+                lr_discriminator_delta
+            )
+            discriminator_y_optimizer.learning_rate.assign_sub(
+                lr_discriminator_delta
+            )
+
         with summary_writer.as_default():
             tf.summary.scalar(
                 "generator_g_loss", generator_g_loss.result(), step=epoch
@@ -220,22 +232,22 @@ if __name__ == "__main__":
                 discriminator_y_loss.result(),
                 step=epoch,
             )
+            tf.summary.scalar(
+                "learning_rate/generator",
+                generator_g_optimizer.learning_rate.numpy(),
+                step=epoch,
+            )
+            tf.summary.scalar(
+                "learning_rate/discriminator",
+                discriminator_x_optimizer.learning_rate.numpy(),
+                step=epoch,
+            )
             tf.summary.image(
                 "Generated Y", generator_g(sample_x) * 0.5 + 0.5, step=epoch
             )
             tf.summary.image(
                 "Generated X", generator_f(sample_y) * 0.5 + 0.5, step=epoch
             )
-
-        # Decay the learning rate
-        if epoch > args.epochs / 2:
-            generator_g_optimizer.learning_rate.assign_sub(lr_generator_delta)
-            generator_f_optimizer.learning_rate.assign_sub(lr_generator_delta)
-
-            discriminator_x_optimizer.learning_rate.assign_sub(lr_discriminator_delta)
-            discriminator_y_optimizer.learning_rate.assign_sub(lr_discriminator_delta)
-
-        print(generator_g_optimizer.learning_rate)
 
         template = "Epoch {} in {:.0f} sec, Gen G Loss: {}, Gen F Loss: {}, Disc X Loss: {}, Disc Y Loss: {}"
         print(
