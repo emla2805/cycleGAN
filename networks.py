@@ -112,6 +112,9 @@ class GeneratorNet(tf.keras.Model):
         self.res4 = ResidualBlock(128)
         self.res5 = ResidualBlock(128)
         self.res6 = ResidualBlock(128)
+        self.res7 = ResidualBlock(128)
+        self.res8 = ResidualBlock(128)
+        self.res9 = ResidualBlock(128)
 
         self.deconv1 = UpsampleConvLayer(
             64, kernel_size=3, strides=1, upsample=2
@@ -135,6 +138,9 @@ class GeneratorNet(tf.keras.Model):
         x = self.res4(x)
         x = self.res5(x)
         x = self.res6(x)
+        x = self.res7(x)
+        x = self.res8(x)
+        x = self.res9(x)
         x = self.relu(self.in4(self.deconv1(x)))
         x = self.relu(self.in5(self.deconv2(x)))
         x = self.deconv3(x)
