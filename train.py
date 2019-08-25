@@ -189,6 +189,9 @@ if __name__ == "__main__":
         discriminator_x_loss(disc_x_loss)
         discriminator_y_loss(disc_y_loss)
 
+    lr_generator_delta = args.lr_generator / (args.epochs / 2)
+    lr_discriminator_delta = args.lr_discriminator / (args.epochs / 2)
+
     for epoch in range(args.epochs):
         start_time = time.time()
 
@@ -226,6 +229,16 @@ if __name__ == "__main__":
                 generator_f(sample_zebra) * 0.5 + 0.5,
                 step=epoch,
             )
+
+        # Decay the learning rate
+        if epoch > args.epochs / 2:
+            generator_g_optimizer.learning_rate.assign_sub(lr_generator_delta)
+            generator_f_optimizer.learning_rate.assign_sub(lr_generator_delta)
+
+            discriminator_x_optimizer.learning_rate.assign_sub(lr_discriminator_delta)
+            discriminator_y_optimizer.learning_rate.assign_sub(lr_discriminator_delta)
+
+        print(generator_g_optimizer.learning_rate)
 
         template = "Epoch {} in {:.0f} sec, Gen G Loss: {}, Gen F Loss: {}, Disc X Loss: {}, Disc Y Loss: {}"
         print(
