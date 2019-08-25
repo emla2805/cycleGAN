@@ -24,6 +24,7 @@ NUM_SAMPLES = 3
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--log-dir", default="models/cycle")
+    parser.add_argument("--dataset", default="horse2zebra")
     parser.add_argument("--lr-generator", default=2e-4, type=float)
     parser.add_argument("--lr-discriminator", default=2e-4, type=float)
     parser.add_argument("--image-size", default=256, type=int)
@@ -32,31 +33,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dataset, metadata = tfds.load(
-        "cycle_gan/horse2zebra", with_info=True, as_supervised=True
+        "cycle_gan/{}".format(args.dataset), with_info=True, as_supervised=True
     )
 
-    train_horses, train_zebras = dataset["trainA"], dataset["trainB"]
-    test_horses, test_zebras = dataset["testA"], dataset["testB"]
+    train_x, train_y = dataset["trainA"], dataset["trainB"]
+    test_x, test_y = dataset["testA"], dataset["testB"]
 
-    train_horses = (
-        train_horses.map(preprocess_image_train, num_parallel_calls=AUTOTUNE)
+    train_x = (
+        train_x.map(preprocess_image_train, num_parallel_calls=AUTOTUNE)
         .cache()
         .shuffle(BUFFER_SIZE)
         .batch(args.batch_size)
     )
-    train_zebras = (
-        train_zebras.map(preprocess_image_train, num_parallel_calls=AUTOTUNE)
+    train_y = (
+        train_y.map(preprocess_image_train, num_parallel_calls=AUTOTUNE)
         .cache()
         .shuffle(BUFFER_SIZE)
         .batch(args.batch_size)
     )
-    test_horses = test_horses.map(preprocess_image_test).batch(NUM_SAMPLES)
-    test_zebras = test_zebras.map(preprocess_image_test).batch(NUM_SAMPLES)
+    test_x = test_x.map(preprocess_image_test).batch(NUM_SAMPLES)
+    test_y = test_y.map(preprocess_image_test).batch(NUM_SAMPLES)
 
-    ds = tf.data.Dataset.zip((train_horses, train_zebras))
+    ds = tf.data.Dataset.zip((train_x, train_y))
 
-    sample_horse = next(iter(test_horses))
-    sample_zebra = next(iter(test_zebras))
+    sample_x = next(iter(test_x))
+    sample_y = next(iter(test_y))
 
     generator_g = networks.GeneratorNet()
     generator_f = networks.GeneratorNet()
@@ -105,8 +106,8 @@ if __name__ == "__main__":
     summary_writer = tf.summary.create_file_writer(args.log_dir)
 
     with summary_writer.as_default():
-        tf.summary.image("Sample Horse", sample_horse * 0.5 + 0.5, step=0)
-        tf.summary.image("Sample Zebra", sample_zebra * 0.5 + 0.5, step=0)
+        tf.summary.image("Sample X", sample_x * 0.5 + 0.5, step=0)
+        tf.summary.image("Sample Y", sample_y * 0.5 + 0.5, step=0)
 
     @tf.function
     def train_step(real_x, real_y):
@@ -220,14 +221,10 @@ if __name__ == "__main__":
                 step=epoch,
             )
             tf.summary.image(
-                "Predicted Zebra",
-                generator_g(sample_horse) * 0.5 + 0.5,
-                step=epoch,
+                "Generated Y", generator_g(sample_x) * 0.5 + 0.5, step=epoch
             )
             tf.summary.image(
-                "Predicted Horse",
-                generator_f(sample_zebra) * 0.5 + 0.5,
-                step=epoch,
+                "Generated X", generator_f(sample_y) * 0.5 + 0.5, step=epoch
             )
 
         # Decay the learning rate
