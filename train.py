@@ -217,18 +217,18 @@ if __name__ == "__main__":
 
         with summary_writer.as_default():
             tf.summary.scalar(
-                "generator_g_loss", generator_g_loss.result(), step=epoch
+                "generator/g_loss", generator_g_loss.result(), step=epoch
             )
             tf.summary.scalar(
-                "generator_f_loss", generator_f_loss.result(), step=epoch
+                "generator/f_loss", generator_f_loss.result(), step=epoch
             )
             tf.summary.scalar(
-                "discriminator_x_loss",
+                "discriminator/x_loss",
                 discriminator_x_loss.result(),
                 step=epoch,
             )
             tf.summary.scalar(
-                "discriminator_y_loss",
+                "discriminator/y_loss",
                 discriminator_y_loss.result(),
                 step=epoch,
             )
