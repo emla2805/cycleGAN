@@ -1,5 +1,11 @@
 import tensorflow as tf
-from tensorflow.python.keras.layers import Conv2D, ReLU, UpSampling2D, LeakyReLU
+from tensorflow.python.keras.initializers import RandomNormal
+from tensorflow.python.keras.layers import (
+    Conv2D,
+    ReLU,
+    LeakyReLU,
+    Conv2DTranspose,
+)
 
 
 class InstanceNormalization(tf.keras.layers.Layer):
@@ -13,7 +19,7 @@ class InstanceNormalization(tf.keras.layers.Layer):
         self.scale = self.add_weight(
             name="scale",
             shape=input_shape[-1:],
-            initializer=tf.random_normal_initializer(0.0, 0.02),
+            initializer=tf.random_normal_initializer(1.0, 0.02),
             trainable=True,
         )
 
@@ -74,9 +80,12 @@ class ResidualBlock(tf.keras.Model):
 class ConvLayer(tf.keras.layers.Layer):
     def __init__(self, channels, kernel_size=3, strides=1):
         super(ConvLayer, self).__init__()
+        init = RandomNormal(stddev=0.02)
         reflection_padding = kernel_size // 2
         self.reflection_pad = ReflectionPadding2D(reflection_padding)
-        self.conv2d = Conv2D(channels, kernel_size, strides=strides)
+        self.conv2d = Conv2D(
+            channels, kernel_size, strides=strides, kernel_initializer=init
+        )
 
     def call(self, x, **kwargs):
         x = self.reflection_pad(x)
@@ -84,26 +93,22 @@ class ConvLayer(tf.keras.layers.Layer):
         return x
 
 
-class UpsampleConvLayer(tf.keras.layers.Layer):
-    def __init__(self, channels, kernel_size=3, strides=1, upsample=2):
-        super(UpsampleConvLayer, self).__init__()
-        self.up2d = UpSampling2D(size=upsample)
-        self.conv2d = Conv2D(channels, kernel_size, strides=strides, padding="same")
-
-    def call(self, x, **kwargs):
-        x = self.up2d(x)
-        x = self.conv2d(x)
-        return x
-
-
 class GeneratorNet(tf.keras.Model):
     def __init__(self):
         super(GeneratorNet, self).__init__()
-        self.conv1 = ConvLayer(64, kernel_size=7, strides=1)
+        init = RandomNormal(stddev=0.02)
+
+        self.conv1 = ConvLayer(32, kernel_size=7, strides=1)
         self.in1 = InstanceNormalization()
-        self.conv2 = Conv2D(64, kernel_size=3, strides=2, padding="same")
+
+        self.conv2 = Conv2D(
+            64, (3, 3), strides=2, padding="same", kernel_initializer=init
+        )
         self.in2 = InstanceNormalization()
-        self.conv3 = Conv2D(128, kernel_size=3, strides=2, padding="same")
+
+        self.conv3 = Conv2D(
+            128, (3, 3), strides=2, padding="same", kernel_initializer=init
+        )
         self.in3 = InstanceNormalization()
 
         self.res1 = ResidualBlock(128)
@@ -116,14 +121,15 @@ class GeneratorNet(tf.keras.Model):
         self.res8 = ResidualBlock(128)
         self.res9 = ResidualBlock(128)
 
-        self.deconv1 = UpsampleConvLayer(
-            64, kernel_size=3, strides=1, upsample=2
+        self.deconv1 = Conv2DTranspose(
+            64, (3, 3), strides=2, padding="same", kernel_initializer=init
         )
         self.in4 = InstanceNormalization()
-        self.deconv2 = UpsampleConvLayer(
-            32, kernel_size=3, strides=1, upsample=2
+        self.deconv2 = Conv2DTranspose(
+            32, (3, 3), strides=2, padding="same", kernel_initializer=init
         )
         self.in5 = InstanceNormalization()
+
         self.deconv3 = ConvLayer(3, kernel_size=7, strides=1)
 
         self.relu = ReLU()
@@ -151,17 +157,28 @@ class GeneratorNet(tf.keras.Model):
 class DiscriminatorNet(tf.keras.Model):
     def __init__(self):
         super(DiscriminatorNet, self).__init__()
-        self.conv1 = Conv2D(64, kernel_size=4, strides=2, padding="same")
+        init = RandomNormal(stddev=0.02)
+        self.conv1 = Conv2D(
+            64, (4, 4), strides=2, padding="same", kernel_initializer=init
+        )
 
-        self.conv2 = Conv2D(128, kernel_size=4, strides=2, padding="same")
+        self.conv2 = Conv2D(
+            128, (4, 4), strides=2, padding="same", kernel_initializer=init
+        )
         self.in2 = InstanceNormalization()
-        self.conv3 = Conv2D(256, kernel_size=4, strides=2, padding="same")
+        self.conv3 = Conv2D(
+            256, (4, 4), strides=2, padding="same", kernel_initializer=init
+        )
         self.in3 = InstanceNormalization()
 
-        self.conv4 = Conv2D(512, kernel_size=4, strides=1, padding="same")
+        self.conv4 = Conv2D(
+            512, (4, 4), strides=1, padding="same", kernel_initializer=init
+        )
         self.in4 = InstanceNormalization()
 
-        self.conv5 = Conv2D(1, kernel_size=4, strides=1, padding="same")
+        self.conv5 = Conv2D(
+            1, (4, 4), strides=1, padding="same", kernel_initializer=init
+        )
 
         self.lrelu = LeakyReLU(alpha=0.2)
 
