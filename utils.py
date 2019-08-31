@@ -1,4 +1,5 @@
 import tensorflow as tf
+from PIL import Image
 
 loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 LAMBDA = 10
@@ -59,3 +60,9 @@ def preprocess_image_train(image, _):
 def preprocess_image_test(image, _):
     image = normalize(image)
     return image
+
+
+def save_img(image, path):
+    image = tf.cast((tf.squeeze(image) + 1) * 127.5, tf.uint8).numpy()
+    img = Image.fromarray(image, mode="RGB")
+    img.save(path)
