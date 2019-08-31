@@ -49,13 +49,27 @@ if __name__ == "__main__":
         fake_y = generator_g(image_x)
         cycled_x = generator_f(fake_y)
 
-        save_img(image_x, os.path.join(args.output_dir, "real_x_{}.png".format(i)))
-        save_img(fake_y, os.path.join(args.output_dir, "fake_y_{}.png".format(i)))
-        save_img(cycled_x, os.path.join(args.output_dir, "cycled_x_{}.png".format(i)))
+        save_img(
+            image_x, os.path.join(args.output_dir, "real_x_{}.png".format(i))
+        )
+        save_img(
+            fake_y, os.path.join(args.output_dir, "fake_y_{}.png".format(i))
+        )
+        save_img(
+            cycled_x,
+            os.path.join(args.output_dir, "cycled_x_{}.png".format(i)),
+        )
 
         fake_x = generator_f(image_y)
         cycled_y = generator_g(fake_x)
 
-        save_img(image_y, os.path.join(args.output_dir, "real_y_{}.png".format(i)))
-        save_img(fake_x, os.path.join(args.output_dir, "fake_x_{}.png".format(i)))
-        save_img(cycled_y, os.path.join(args.output_dir, "cycled_y_{}.png".format(i)))
+        save_img(
+            image_y, os.path.join(args.output_dir, "real_y_{}.png".format(i))
+        )
+        save_img(
+            fake_x, os.path.join(args.output_dir, "fake_x_{}.png".format(i))
+        )
+        save_img(
+            cycled_y,
+            os.path.join(args.output_dir, "cycled_y_{}.png".format(i)),
+        )
