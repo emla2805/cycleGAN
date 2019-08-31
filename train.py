@@ -24,7 +24,19 @@ NUM_SAMPLES = 3
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--log-dir", default="models/cycle")
-    parser.add_argument("--dataset", default="horse2zebra")
+    parser.add_argument(
+        "--dataset",
+        default="horse2zebra",
+        choices=[
+            "apple2orange",
+            "summer2winter_yosemite",
+            "horse2zebra",
+            "monet2photo",
+            "cezanne2photo",
+            "ukiyoe2photo",
+            "vangogh2photo",
+        ],
+    )
     parser.add_argument("--lr-generator", default=2e-4, type=float)
     parser.add_argument("--lr-discriminator", default=2e-4, type=float)
     parser.add_argument("--image-size", default=256, type=int)
