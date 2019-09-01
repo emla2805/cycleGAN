@@ -57,7 +57,7 @@ pip install -r requirements.txt
 
 To transform images from the test set using a pre-trained model specify the log directory containing model checkpoints.
 
-### Style image
+### Transform images
 
 ```bash
 python transform.py \
